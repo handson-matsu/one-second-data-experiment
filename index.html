@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7f2">
+  <title>1 SECOND DATA — あなたの1秒を、データに。</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="stats.js" defer></script>
+  <script src="experiment-config.js" defer></script>
+  <script src="experiment.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="site-header"><a class="brand" href="./" aria-label="1 SECOND DATA ホーム"><span class="brand-icon">1<span>″</span></span>1 SECOND DATA</a><span class="header-note">A LITTLE EXPERIMENT WITH TIME</span><span class="local-badge"><i></i> ブラウザだけで完結</span></header>
+  <main>
+    <section id="setup" aria-labelledby="setup-title">
+      <div class="intro"><p class="eyebrow">FEEL THE TIME. FIND THE PATTERN.</p><h1 id="setup-title">あなたの<span class="accent">1秒</span>を、<br>データに。</h1><p class="intro-copy">時計を見ずに、リズムを刻もう。<br>その小さなずれに、あなたの時間感覚が見えてくる。</p><div class="sample-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><p class="wave-caption">ひとつひとつのタップが、ひとつのデータ。</p></div>
+      <form id="settings" class="settings-card">
+        <div class="card-heading"><span class="eyebrow">LET’S EXPERIMENT</span><span class="step-tag">SET UP / 01</span></div>
+        <fieldset><legend><span class="number">01</span>目標時間<span class="legend-sub">どのくらいの時間を感じる？</span></legend><div class="choices targets"><label><input type="radio" name="target" value="1" checked><span>1<small>秒</small></span></label><label><input type="radio" name="target" value="3"><span>3<small>秒</small></span></label><label><input type="radio" name="target" value="5"><span>5<small>秒</small></span></label></div></fieldset>
+        <fieldset><legend><span class="number">02</span>測定回数<span class="legend-sub">データをいくつ集める？</span></legend><div class="choices counts"><label><input type="radio" name="count" value="10"><span>10<small>回</small></span></label><label><input type="radio" name="count" value="30"><span>30<small>回</small></span></label><label><input type="radio" name="count" value="50"><span>50<small>回</small></span></label><label><input type="radio" name="count" value="100" checked><span>100<small>回</small></span></label></div></fieldset>
+        <fieldset><legend><span class="number">03</span>フィードバック</legend><div class="feedback-choices"><label><input type="radio" name="feedback" value="on" checked><span><strong>毎回の測定結果を見る</strong><small>タップするたびに、直前の時間を表示</small></span></label><label><input type="radio" name="feedback" value="off"><span><strong>測定中は結果を見ない</strong><small>自分の時間感覚だけを頼りに</small></span></label></div></fieldset>
+        <button class="primary start" type="submit">準備する <span>→</span></button><p class="start-note">次の画面の START で測定開始。<span id="start-target">1秒</span>だと思ったら STOP！</p>
+      </form>
+      <div class="how-it-works"><div><span>01 / TAP</span><p>感じた時間でタップ</p></div><span class="flow-arrow" aria-hidden="true">→</span><div><span>02 / COLLECT</span><p>あなたのリズムを記録</p></div><span class="flow-arrow" aria-hidden="true">→</span><div><span>03 / DISCOVER</span><p>グラフから特徴を発見</p></div></div>
+    </section>
+    <section id="measurement" hidden aria-labelledby="measurement-title"><div class="measurement-top"><span class="eyebrow">FEEL YOUR OWN RHYTHM</span><button id="reset" class="text-button">↺ リセット</button></div><h1 id="measurement-title">あなたのリズムで、タップ。</h1><p id="measure-instruction"></p><div class="counter"><strong id="completed">0</strong><span id="total"> / 100</span></div><div class="progress-track"><div id="progress"></div></div><button id="tap" aria-label="START：測定を開始"><span>START</span><small>KEEP YOUR RHYTHM</small></button><div id="feedback-area"><span class="eyebrow" id="feedback-label">LAST TAP</span><p id="last-value" role="status" aria-live="polite">—<small>秒</small></p></div><p class="keyboard-note">タップ・クリック・スペースキーで記録</p></section>
+    <section id="results" hidden aria-labelledby="results-title"><div class="results-top"><div><p class="eyebrow">YOUR TIME, VISUALIZED.</p><h1 id="results-title" tabindex="-1">あなたの時間のかたち。</h1><p id="result-context"></p></div><div class="result-actions"><button id="restart" class="primary">もう一度測定する <span>↗</span></button><button id="download-csv" class="text-button" type="button">CSVダウンロード <span aria-hidden="true">↓</span></button></div></div><div id="summary" class="summary-grid"></div><div class="chart-grid"><article class="panel"><div class="panel-head"><div><span class="eyebrow">DISTRIBUTION</span><h2>時間の分布</h2></div><span class="chart-key">目標時間</span></div><p class="panel-copy">どの時間に、タップが集まった？</p><div id="histogram" class="chart"></div><p id="bin-note" class="chart-note"></p><details class="frequency"><summary>度数分布表を見る<span>＋</span></summary><div class="table-scroll"><table><thead><tr><th scope="col">階級（秒）</th><th scope="col">度数</th></tr></thead><tbody id="frequency-body"></tbody><tfoot><tr><th scope="row">合計</th><td id="frequency-total"></td></tr></tfoot></table></div></details></article><article class="panel"><div class="panel-head"><div><span class="eyebrow">OVER TIME</span><h2>タップの移り変わり</h2></div><span class="chart-key">目標時間</span></div><p class="panel-copy">最初から最後まで、リズムはどう変わった？</p><div id="sequence" class="chart"></div><p class="chart-note">点は1回ごとの測定値。すべてのタップを測定順に表示。</p></article></div><details class="panel all-data"><summary>すべての測定データ<span id="data-count"></span></summary><ol id="data-list"></ol></details><p class="result-footnote">統計量は丸める前のデータから計算しています。分散は測定回数 n で割った母分散です。</p></section>
+  </main><footer><span>1 SECOND DATA</span><p>小さな実験、大きな気づき。</p><span>TIME × STATISTICS</span></footer>
+</body>
+</html>
