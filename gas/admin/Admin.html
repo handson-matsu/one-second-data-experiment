@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><base target="_top"><title>1 SECOND DATA 管理</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f6f7f2;color:#233e34;font:16px system-ui,sans-serif}main{max-width:1280px;margin:auto;padding:28px}h1{font-size:26px}h2{font-size:19px}section{background:white;border:1px solid #d8e2da;border-radius:12px;padding:20px;margin:20px 0}.cards,form,.breakdowns{display:flex;gap:16px;flex-wrap:wrap}.card{background:#eef4e8;padding:16px;min-width:140px;border-radius:8px}.card strong{display:block;font-size:28px}label{display:flex;flex-direction:column;gap:6px}select,input,button{font:inherit;padding:9px;border:1px solid #9bb3a4;border-radius:6px}button{background:#237655;color:white;cursor:pointer}button:disabled{opacity:.5;cursor:default}small,.note{color:#556a60}#error{color:#9d2424}table{border-collapse:collapse;white-space:nowrap;width:100%}th,td{text-align:left;border-bottom:1px solid #dce5df;padding:9px;font-size:13px}th{background:#eef4e8}.table-scroll{overflow:auto;max-height:560px}.breakdowns>div{flex:1;min-width:200px}.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}#status{font-weight:bold}@media(max-width:600px){main{padding:12px}section{padding:14px}}
+</style></head>
+<body><main>
+<h1>1 SECOND DATA <small>管理者画面</small></h1>
+<p class="note">集計・抽出・受付切替専用です。データを削除する操作はありません。</p>
+<p id="error" role="alert"></p><p id="message" role="status" aria-live="polite"></p>
+<section><h2>受付状態</h2><div class="toolbar"><span id="status">確認中…</span><button id="toggle" disabled>受付を切り替える</button><button id="refresh">更新</button></div>
+<p class="note">OFFに切り替えても、すでに受付判定を通過した送信は保存される場合があります。</p></section>
+<section><h2>全体のデータ状況</h2><div class="cards" id="cards"></div><p id="latest"></p><p id="legacy" class="note"></p><div class="breakdowns" id="breakdowns"></div></section>
+<section><h2>データ抽出</h2><p id="timezone" class="note"></p>
+<form id="filters">
+<label>区分<select name="data_type"><option value="">すべて</option><option value="production">実験データ（production）</option><option value="test">開発テスト（test）</option></select></label>
+<label>目標時間<select name="target_seconds"><option value="">すべて</option><option>1</option><option>3</option><option>5</option></select></label>
+<label>フィードバック<select name="feedback_mode"><option value="">すべて</option><option value="on">on</option><option value="off">off</option></select></label>
+<label>予定回数<select name="planned_count"><option value="">すべて</option><option>10</option><option>30</option><option>50</option><option>100</option></select></label>
+<label>受信日（開始）<input type="date" name="from"></label><label>受信日（終了）<input type="date" name="to"></label>
+<button type="submit">この条件で抽出</button></form>
+<p class="note">条件はANDで適用します。区分未記録の旧データは実験データに含めます。CSVには保存済みの全列・抽出全件を含めます。</p>
+<div class="toolbar"><p id="count">未取得</p><button id="csv" disabled>この条件の全件をCSV保存</button></div>
+<div class="table-scroll"><table id="data"><thead></thead><tbody></tbody></table></div>
+<div class="toolbar"><button id="prev" disabled>前へ</button><span id="page"></span><button id="next" disabled>次へ</button></div>
+</section></main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+let state=null, applied={}, busy=false;
+function rpc(name,...args){return new Promise((resolve,reject)=>google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](...args));}
+function controls(){
+ document.querySelectorAll('button,input,select').forEach(el=>el.disabled=busy);
+ $('toggle').disabled=busy||!state;$('csv').disabled=busy||!state||!state.count;
+ $('prev').disabled=busy||!state||state.page<=1;$('next').disabled=busy||!state||state.page>=state.totalPages;
+}
+async function task(work){if(busy)return;busy=true;controls();$('error').textContent='';$('message').textContent='処理中…';try{await work();$('message').textContent='更新しました。';}catch(e){$('error').textContent=e.message||String(e);$('message').textContent='';}finally{busy=false;controls();}}
+function element(tag,text){const node=document.createElement(tag);node.textContent=text;return node;}
+function render(data){
+ state=data;$('status').textContent=data.accepting?'受付 ON（TRUE）':'受付 OFF（FALSE）';$('toggle').textContent=data.accepting?'受付をOFFにする':'受付をONにする';
+ $('cards').replaceChildren();for(const [key,label] of [['production','実験データ'],['test','開発テスト'],['total','全データ'],['unknown','区分不明']]){const card=element('div',label);card.className='card';card.append(element('strong',data.summary[key]));$('cards').append(card);}
+ $('latest').textContent='最新受信日時：'+(data.summary.latest?new Date(data.summary.latest).toLocaleString('ja-JP',{timeZone:data.timezone})+' ('+data.timezone+')':'データなし');
+ $('legacy').textContent=`実験データのうち区分未記録：${data.summary.legacy}件。旧データの元の区分を断定するものではありません。`;
+ $('timezone').textContent=`受信日の範囲は両端の日を含みます。タイムゾーン：${data.timezone}`;
+ $('breakdowns').replaceChildren();for(const [key,label] of [['target_seconds','目標時間別'],['feedback_mode','フィードバック別'],['planned_count','予定回数別']]){const box=element('div','');box.append(element('h3',label));for(const [value,count]of Object.entries(data.summary[key]))box.append(element('p',`${value}：${count}件`));$('breakdowns').append(box);}
+ $('count').textContent=`抽出 ${data.count}件（一覧は1ページ50件）`;$('page').textContent=`${data.page} / ${data.totalPages}`;
+ const head=$('data').querySelector('thead'),body=$('data').querySelector('tbody');head.replaceChildren();body.replaceChildren();
+ const tr=element('tr','');for(const h of data.headers)tr.append(element('th',h));head.append(tr);
+ for(const row of data.rows){const tr=element('tr','');for(const v of row)tr.append(element('td',v));body.append(tr);}
+}
+async function load(filters,page){const result=await rpc('getDashboard',filters,page);applied={...filters};render(result);}
+$('filters').addEventListener('submit',e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));task(()=>load(f,1));});
+$('refresh').onclick=()=>task(()=>load(applied,state?.page||1));
+$('prev').onclick=()=>task(()=>load(applied,state.page-1));$('next').onclick=()=>task(()=>load(applied,state.page+1));
+$('toggle').onclick=()=>{const value=!state.accepting;if(!confirm(`受付を${value?'ON':'OFF'}に変更しますか？`))return;task(async()=>{const result=await rpc('setAccepting',value);state.accepting=result.accepting;render(state);await load(applied,state.page);});};
+$('csv').onclick=()=>task(async()=>{const result=await rpc('exportCsv',applied);const url=URL.createObjectURL(new Blob([result.csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=result.filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);});
+task(()=>load({},1));
+</script></body></html>

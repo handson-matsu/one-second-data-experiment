@@ -56,6 +56,7 @@ const path = require('node:path');
    assert.equal(data.target_seconds,target);assert.equal(data.planned_count,count);assert.equal(data.feedback_mode,feedback);
    assert.deepEqual(data.measurements_ms,expected);
    assert.deepEqual(data.measurements_ms,await page.evaluate(()=>session.values));
+   assert.equal(data.data_type,'production');
    assert.equal(data.app_version,'one-second-data-experiment/1.0.0');assert.equal(data.schema_version,'1');
    assert.ok(data.session_id.length>=32);
    for(const key of ['started_at','completed_at'])assert.equal(new Date(data[key]).toISOString(),data[key]);

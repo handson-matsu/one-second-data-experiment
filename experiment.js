@@ -30,7 +30,11 @@
           planned_count: plannedCount,
           feedback_mode: feedbackMode,
           app_version: config.appVersion,
-          schema_version: '1'
+          schema_version: '1',
+          // Only the loopback-only test launcher can opt in; public URLs ignore it.
+          data_type: config.localTest === true &&
+            ['127.0.0.1', 'localhost', '[::1]'].includes(root.location?.hostname)
+            ? 'test' : 'production'
         };
       },
       reset() { current = null; },

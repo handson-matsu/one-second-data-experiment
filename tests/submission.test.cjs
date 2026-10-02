@@ -53,3 +53,14 @@ for(const failure of ['throw','reject']) test(`${failure} is contained without r
 test('reset discards an incomplete session',()=>{
  const {calls,reporter}=setup();reporter.start(1,10,'on');reporter.reset();reporter.complete(Array(10).fill(1000),'2026-10-02T12:00:00.000Z');assert.equal(calls.length,0);
 });
+
+test('public hosts always production; test opt-in works only on loopback without persisted modes',()=>{
+ for(const [hostname,localTest,expected] of [['example.github.io',true,'production'],['example.github.io',false,'production'],['127.0.0.1',true,'test'],['localhost',false,'production'],['',true,'production']]){
+  const calls=[];const context=vm.createContext({crypto:webcrypto,location:{hostname,search:'?data_type=test',hash:'#test'},fetch:(url,options)=>{calls.push(options);return Promise.resolve({});}});
+  vm.runInContext(source,context);
+  const config={endpoint:'https://example.invalid',appVersion:'1',localTest};const reporter=context.ExperimentData.createReporter(config);
+  reporter.start(1,10,'on');config.localTest=!localTest;
+  reporter.complete(Array(10).fill(1000.125),'2026-10-02T12:00:00.000Z');
+  assert.equal(JSON.parse(calls[0].body).data_type,expected);
+ }
+});

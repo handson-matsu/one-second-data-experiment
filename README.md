@@ -60,8 +60,15 @@
   "feedback_mode": "on",
   "measurements_ms": [957.5, 978.75, 1000, 1021.25, 1042.5, 957.5, 978.75, 1000, 1021.25, 1042.5],
   "app_version": "one-second-data-experiment/1.0.0",
-  "schema_version": "1"
+  "schema_version": "1",
+  "data_type": "production"
 }
 ```
 
 通信方式の参考：[GAS Web Apps](https://developers.google.com/apps-script/guides/web)、[Fetch APIのno-cors制約](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)。
+
+## 本番／テスト区分と管理者機能
+
+公開参加者アプリの送信には `data_type: "production"` を付けます。URLパラメーターや画面操作による切替はありません。`node tools/test-server.cjs` で起動し、`http://127.0.0.1:8765` を開いたローカル専用版は `test` を送信します。公開ファイルは変更されず、TEST表示で区別できます。
+
+GAS側コードと導入手順は [gas/README.md](gas/README.md) を参照してください。受信用GASを先に更新し、その後に参加者アプリを公開する順序です。管理者画面は別GASプロジェクトに作成し、アクセスを自分のみに限定します。旧データの未記録区分は本番として集計し、旧形式の件数も表示します。実際のGAS・スプレッドシートはこのリポジトリの編集だけでは更新されません。
